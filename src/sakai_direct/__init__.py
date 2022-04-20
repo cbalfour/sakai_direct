@@ -134,14 +134,15 @@ class SakaiSitesIterator:
 
 class SakaiSites:
 
-    def __init__(self, sakai: Sakai) -> None:
+    def __init__(self, sakai: Sakai, course_only = False) -> None:
         self.sakai = sakai
-        self.__get_sites()
+        self.course_only = course_only
+        self.__get_sites(course_only)
         
-    def __get_sites(self) -> None:
+    def __get_sites(self, course_only: bool = False) -> None:
 
         url = f'{self.sakai.url}/site.json'
-        self.sites= []
+        self.sites = []
 
         # Sakai has a limit on the number of sites it returns 
         # per request. Depending on the number of sites the 
@@ -164,6 +165,9 @@ class SakaiSites:
             for site_data in data['site_collection']:
                 site_id = site_data['id']
                 site = SakaiSite(self.sakai, site_id)
+
+                if course_only and site.type != 'course': continue
+
                 if not site in self.sites:
                     self.sites.append(site)
 
@@ -177,9 +181,6 @@ class SakaiSites:
 
     def __iter__(self):
         return SakaiSitesIterator(self)
-
-    def get_sites(self) -> List:
-        return self.sites
 
     def get_site(self, site_id: str) -> str:
         site =  next((site for site in self.sites if site.get_id() == site_id), None)
