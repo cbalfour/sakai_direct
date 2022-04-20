@@ -46,20 +46,6 @@ class Sakai:
 
     def get_sites(self, course_only=True) -> Dict:
         return SakaiSites(self)
-#        sites = {}
-#        r = requests.get(self.url + '/site.json', cookies=self._cookiejar)
-#        data = r.json()
-#        for site_data in data['site_collection']:
-#            site_type = site_data['type']
-#            if course_only and site_type != 'course': continue
-#            site_id = site_data['id']
-#            try:
-#                site_title = site_data['title']
-#            except:
-#                site_title = None
-#            sites[site_id] = { 'site_title': site_title, 'site_type': site_type } 
-#
-#        return sites
 
     def get_assignments(self, site_id: str) -> Dict:
         assignments = {}
