@@ -45,20 +45,21 @@ class Sakai:
 
 
     def get_sites(self, course_only=True) -> Dict:
-        sites = {}
-        r = requests.get(self.url + '/site.json', cookies=self._cookiejar)
-        data = r.json()
-        for site_data in data['site_collection']:
-            site_type = site_data['type']
-            if course_only and site_type != 'course': continue
-            site_id = site_data['id']
-            try:
-                site_title = site_data['title']
-            except:
-                site_title = None
-            sites[site_id] = { 'site_title': site_title, 'site_type': site_type } 
-
-        return sites
+        return SakaiSites(self)
+#        sites = {}
+#        r = requests.get(self.url + '/site.json', cookies=self._cookiejar)
+#        data = r.json()
+#        for site_data in data['site_collection']:
+#            site_type = site_data['type']
+#            if course_only and site_type != 'course': continue
+#            site_id = site_data['id']
+#            try:
+#                site_title = site_data['title']
+#            except:
+#                site_title = None
+#            sites[site_id] = { 'site_title': site_title, 'site_type': site_type } 
+#
+#        return sites
 
     def get_assignments(self, site_id: str) -> Dict:
         assignments = {}
@@ -130,6 +131,21 @@ class Sakai:
     def get_session_id(self):
         return self._cookiejar['JSESSIONID']
 
+class SakaiSitesIterator:
+
+    def __init__(self, site_collection):
+        self._site_collection = site_collection
+        self._index = 0
+
+    def __next__(self):
+        if self._index < len(self._site_collection.sites):
+            result = self._site_collection.sites[self._index]
+            self._index += 1
+            return result
+
+
+        raise StopIteration
+
 class SakaiSites:
 
     def __init__(self, sakai: Sakai) -> None:
@@ -172,6 +188,9 @@ class SakaiSites:
                 else:
                     if key == 'site_collection':
                         self.site_collection += data['site_collection']
+
+    def __iter__(self):
+        return SakaiSitesIterator(self)
 
     def get_sites(self) -> List:
         return self.sites
