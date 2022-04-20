@@ -49,14 +49,6 @@ class Sakai:
 
     def get_assignments(self, site_id: str):
         return SakaiAssignments(self, site_id)
-#    assignments = {}
-#        r = requests.get(f'{self.url}/assignment/site/{site_id}.json', cookies=self._cookiejar)
-#        data = r.json()
-#        for assignment_data in data['assignment_collection']:
-#            assignment_id = assignment_data['id']
-#            assignment_title = assignment_data['title']
-#            assignments[assignment_id] = { 'assignment_title': assignment_title }
-#        return assignments
 
     def get_membership(self, site_id: str) -> Dict:
         members = {}
