@@ -400,10 +400,10 @@ class SakaiMembership:
         data = r.json()
             
         for key in data.keys():
-            setattr(self, key, data[key])
+            setattr(self, '_' + key, data[key])
 
         self.members = []
-        for member_data in self.membership_collection:
+        for member_data in self._membership_collection:
             member_id = member_data['userId']
             member = SakaiMember(self.sakai, member_id, member_data)
             if not member in self.members:
@@ -413,15 +413,15 @@ class SakaiMembership:
         return SakaiMembershipIterator(self)
 
     def get_members_by_userid(self, user_id: str) -> List:
-        return [ member for member in self.members if member.userId.lower() == user_id.lower() ]
+        return [ member for member in self.members if member._userId.lower() == user_id.lower() ]
 
 
     def get_member_by_userid(self, user_id: str) -> str:
-        member =  next((member for member in self.members if member.userId == user_id), None)
+        member =  next((member for member in self.members if member._userId == user_id), None)
         return member
 
     def get_members_by_usereid(self, user_eid: str) -> List:
-        return [ member for member in self.members if member.userEid.lower() == user_eid.lower() ]
+        return [ member for member in self.members if member._userEid.lower() == user_eid.lower() ]
 
 
 # We are not able to query /direct/member so we need to provide the data
