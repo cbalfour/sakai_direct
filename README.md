@@ -1,4 +1,4 @@
-A library for interacting with Sakai/Vula using the direct API.
+A library for interacting with Sakai using the direct API.
 
 Dependencies
 ------------
