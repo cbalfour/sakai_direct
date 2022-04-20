@@ -43,32 +43,14 @@ class Sakai:
             return True
         return False
 
-
     def get_sites(self, course_only=True):
         return SakaiSites(self)
 
     def get_assignments(self, site_id: str):
         return SakaiAssignments(self, site_id)
 
-    def get_membership(self, site_id: str) -> Dict:
-        members = {}
-        url = f'{self.url}/membership/site/{site_id}.json'
-
-
-        data = None
-        try:
-            with open(f'{site_id}-members.json') as data_file:
-                data = json.load(data_file)
-        except FileNotFoundError:
-                r = requests.get(url, cookies=self._cookiejar)
-                data = r.json()
-
-        for member_data in data['membership_collection']:
-            user_id = member_data['userId']
-            display_id = member_data['userDisplayId']
-            role = member_data['memberRole']
-            members[user_id] = { 'username': display_id, 'role': role }
-        return members
+    def get_membership(self, site_id: str):
+        return SakaiMembership(self, site_id)
 
     def get_site_term(self, site_id: str) -> int:
         url = f'{self.url}/site/{site_id}.json'
@@ -388,6 +370,20 @@ class SakaiAssignments:
 
         return assignment
 
+class SakaiMembershipIterator:
+
+    def __init__(self, membership_collection):
+        self._membership_collection = membership_collection
+        self._index = 0
+
+    def __next__(self):
+        if self._index < len(self._membership_collection.members):
+            result = self._membership_collection.members[self._index]
+            self._index += 1
+            return result
+
+
+        raise StopIteration
 
 class SakaiMembership:
 
@@ -413,6 +409,9 @@ class SakaiMembership:
             if not member in self.members:
                 self.members.append(member)
 
+    def __iter__(self):
+        return SakaiMembershipIterator(self)
+
     def get_members_by_userid(self, user_id: str) -> List:
         return [ member for member in self.members if member.userId.lower() == user_id.lower() ]
 
@@ -423,9 +422,6 @@ class SakaiMembership:
 
     def get_members_by_usereid(self, user_eid: str) -> List:
         return [ member for member in self.members if member.userEid.lower() == user_eid.lower() ]
-
-    def get_members(self) -> List:
-        return self.members
 
 
 # We are not able to query /direct/member so we need to provide the data
