@@ -44,18 +44,19 @@ class Sakai:
         return False
 
 
-    def get_sites(self, course_only=True) -> Dict:
+    def get_sites(self, course_only=True):
         return SakaiSites(self)
 
-    def get_assignments(self, site_id: str) -> Dict:
-        assignments = {}
-        r = requests.get(f'{self.url}/assignment/site/{site_id}.json', cookies=self._cookiejar)
-        data = r.json()
-        for assignment_data in data['assignment_collection']:
-            assignment_id = assignment_data['id']
-            assignment_title = assignment_data['title']
-            assignments[assignment_id] = { 'assignment_title': assignment_title }
-        return assignments
+    def get_assignments(self, site_id: str):
+        return SakaiAssignments(self, site_id)
+#    assignments = {}
+#        r = requests.get(f'{self.url}/assignment/site/{site_id}.json', cookies=self._cookiejar)
+#        data = r.json()
+#        for assignment_data in data['assignment_collection']:
+#            assignment_id = assignment_data['id']
+#            assignment_title = assignment_data['title']
+#            assignments[assignment_id] = { 'assignment_title': assignment_title }
+#        return assignments
 
     def get_membership(self, site_id: str) -> Dict:
         members = {}
@@ -284,52 +285,77 @@ class SakaiAssignment:
             data = self.assignment_data
 
         for key in data.keys():
-            setattr(self, key, data[key])
+            setattr(self, '_' + key, data[key])
 
     def __eq__(self, other) -> bool:
-        if self.id == other.id:
+        if self._id == other._id:
             return True
         return False
 
-    def get_id(self) -> str:
-        return self.id
+    @property
+    def id(self) -> str:
+        return self._id
 
-    def get_grade_scale(self) -> str:
-        return self.gradeScale
+    @property
+    def grade_scale(self) -> str:
+        return self._gradeScale
 
-    def get_grade_scale_max_points(self) -> float:
-        return float(self.gradeScaleMaxPoints)
+    @property
+    def grade_scale_max_points(self) -> float:
+        return float(self._gradeScaleMaxPoints)
 
-    def get_due_time(self) -> datetime:
-        return convert_timestamp(self.dueTime['time'])
+    @property
+    def due_time(self) -> datetime:
+        return convert_timestamp(self._dueTime['time'])
 
-    def get_title(self) -> str:
-        return self.title
+    @property
+    def title(self) -> str:
+        return self._title
 
-    def get_status(self) -> str:
-        return self.status
+    @property
+    def status(self) -> str:
+        return self._status
 
+    @property
     def is_draft(self) -> bool:
-        return self.draft
+        return self._draft
 
-    def get_close_time(self) -> datetime:
-        return convert_timestamp(self.closeTime['time'])
+    @property
+    def close_time(self) -> datetime:
+        return convert_timestamp(self._closeTime['time'])
 
-    def get_time_last_modified(self) -> datetime:
-        return convert_timestamp(self.timeLastModified['time'])
+    @property
+    def time_last_modified(self) -> datetime:
+        return convert_timestamp(self._timeLastModified['time'])
 
+    @property
     def is_resubmittable(self) -> bool:
-        return self.allowResubmission
+        return self._allowResubmission
 
-    def get_submission_type(self) -> str:
-        return self.submissionType
+    @property
+    def submission_type(self) -> str:
+        return self._submissionType
 
-    def get_status(self) -> str:
-        return self.status
+    @property
+    def status(self) -> str:
+        return self._status
 
     def __repr__(self) -> str:
-        return f'{self.title}'
+        return f'{self._title}'
 
+class SakaiAssignmentsIterator:
+
+    def __init__(self, assignment_collection):
+        self._assignment_collection = assignment_collection
+        self._index = 0
+
+    def __next__(self):
+        if self._index < len(self._assignment_collection.assignments):
+            result = self._assignment_collection.assignments[self._index]
+            self._index += 1
+            return result
+
+        raise StopIteration
 
 class SakaiAssignments:
 
@@ -360,8 +386,8 @@ class SakaiAssignments:
             if not assignment in self.assignments:
                 self.assignments.append(assignment)
 
-    def get_assignments(self) -> List:
-        return self.assignments
+    def __iter__(self):
+        return SakaiAssignmentsIterator(self)
 
     def get_assignment_by_name(self, name: str) -> SakaiAssignment:
         assignment =  next((assignment for assignment in self.assignments if assignment.get_title() == name), None)
