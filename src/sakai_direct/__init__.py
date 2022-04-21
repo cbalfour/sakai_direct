@@ -72,7 +72,7 @@ class Sakai:
         except FileNotFoundError:
                 r = requests.get(url, cookies=self._cookiejar)
                 if r.status_code != 200:
-                    raise Exception("No gradebook")
+                    raise Exception('No gradebook found.')
                 data = r.json()
 
         for grade_data in data['assignments']:
@@ -86,10 +86,12 @@ class Sakai:
 
         return gradebook 
 
-    def get_cookie_jar(self):
+    @property
+    def cookie_jar(self):
         return self._cookiejar
 
-    def get_session_id(self):
+    @property
+    def session_id(self):
         return self._cookiejar['JSESSIONID']
 
 class SakaiSitesIterator:
@@ -129,7 +131,7 @@ class SakaiSites:
             payload = { '_start': i, '_limit': i + 50 }
             r = requests.get(
                 url, 
-                cookies=self.sakai.get_cookie_jar(), 
+                cookies=self.sakai.cookie_jar, 
                 params = payload
             )
 
@@ -158,7 +160,7 @@ class SakaiSites:
         return SakaiSitesIterator(self)
 
     def get_site(self, site_id: str) -> str:
-        site =  next((site for site in self.sites if site.get_id() == site_id), None)
+        site =  next((site for site in self.sites if site.id == site_id), None)
         if site:
             return site 
         raise SiteNotFoundError('Site not found.')
@@ -173,7 +175,7 @@ class SakaiSite:
 
     def __get_site(self) -> None:
         url = f'{self.sakai.url}/site/{self.site_id}.json'
-        r = requests.get(url, cookies = self.sakai.get_cookie_jar())
+        r = requests.get(url, cookies = self.sakai.cookie_jar)
         data = r.json()
         for key in data.keys():
             setattr(self, '_' + key, data[key])
@@ -251,7 +253,7 @@ class SakaiAssignment:
     def __get_assignment(self) -> None:
         if not self.assignment_data:
             url = f'{self.sakai.url}/assignment/item/{self.assignment_id}.json'
-            r = requests.get(url, cookies=self.sakai.get_cookie_jar())
+            r = requests.get(url, cookies=self.sakai.cookie_jar)
             if r.status_code != 200:
                 raise AssignmentNotFoundError("Assignment not found.")
             data = r.json()
@@ -344,7 +346,7 @@ class SakaiAssignments:
         # in the site specified
         url = f'{self.sakai.url}/assignment/site/{self.site_id}.json'
 
-        r = requests.get(url, cookies=self.sakai.get_cookie_jar())
+        r = requests.get(url, cookies=self.sakai.cookie_jar)
         try:
             data = r.json()
         except RequestsJSONDecodeError as e:
@@ -396,7 +398,7 @@ class SakaiMembership:
 
         url = f'{self.sakai.url}/membership/site/{self.site_id}.json'
 
-        r = requests.get(url, cookies=self.sakai.get_cookie_jar())
+        r = requests.get(url, cookies=self.sakai.cookie_jar)
         data = r.json()
             
         for key in data.keys():
@@ -504,7 +506,7 @@ class SakaiGradebook:
 
         url = f'{self.sakai.url}/gradebook/site/{self.site_id}.json'
 
-        r = requests.get(url, cookies=self.sakai.get_cookie_jar())
+        r = requests.get(url, cookies=self.sakai.cookie_jar)
         if r.status_code != 200:
             raise NoGradebookError('No gradebook found')
         data = r.json()
