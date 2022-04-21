@@ -176,6 +176,8 @@ class SakaiSite:
     def __get_site(self) -> None:
         url = f'{self.sakai.url}/site/{self.site_id}.json'
         r = requests.get(url, cookies = self.sakai.cookie_jar)
+        if r.status_code != 200:
+            raise SiteNotFoundError(f'Site {self.site_id} not found')
         data = r.json()
         for key in data.keys():
             setattr(self, '_' + key, data[key])
